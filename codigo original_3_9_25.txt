@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Presupuestos Burgos Vidrios</title>
+    <title>Presupuesto Burgos Vidrios</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -67,7 +67,7 @@
             z-index: 10;
         }
         #cliente, #items, #totales, footer {
-            margin-bottom: 10px;
+            margin-bottom: 20px;
         }
         .cliente-info {
             display: grid;
@@ -98,12 +98,13 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            margin-top: 20px;
         }
         th, td {
             border: 1px solid #000;
-            padding: 3px;
+            padding: 8px;
             text-align: center;
+            font-size: 0.9em;
         }
         th {
             background-color: #e0e0e0;
@@ -117,6 +118,7 @@
             background-color: transparent;
             font-size: 0.9em;
             padding: 0;
+            width: 100%;
         }
         td.descripcion input {
             text-align: left;
@@ -132,7 +134,7 @@
             margin-top: 30px;
         }
         button {
-            padding: 10px 20px;
+            padding: 5px 10px;
             font-size: 1em;
             cursor: pointer;
             border: none;
@@ -144,13 +146,22 @@
         #btn-pdf:hover { background-color: #c9302c; }
         #btn-print { background-color: #5bc0de; color: white; }
         #btn-print:hover { background-color: #31b0d5; }
-        #btn-add-row { background-color: #5181e9; color: white; margin-top: 10px; }
-        #btn-add-row:hover { background-color: #4cae4c; }
+        .row-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        #btn-add-row, #btn-remove-row { background-color: #5181e9; color: white; }
+        #btn-add-row:hover, #btn-remove-row:hover { background-color: #4cae4c; }
+        #btn-remove-row { background-color: #dc3545; }
+        #btn-remove-row:hover { background-color: #c82333; }
         footer textarea { min-height: 60px; }
 
+        /* Estilos para impresión */
         @media print {
             body { background-color: #fff; padding: 0; margin: 0; }
-            .acciones, #btn-add-row, .no-print-pdf { display: none !important; }
+            .acciones, .row-actions, .no-print-pdf, .btn-remove-row { display: none !important; }
             .presupuesto-container { box-shadow: none; border: none; margin: 0; padding: 20px; }
             input, textarea, select {
                 border: none !important;
@@ -164,58 +175,40 @@
             input[type="date"]::-webkit-calendar-picker-indicator { display: none; }
         }
 
-         /* Responsive Styles - Media Queries */
+        /* Responsive Styles - Media Queries */
         /* Para pantallas pequeñas, como celulares */
         @media (max-width: 600px) {
-            body {
-                padding: 10px;
-            }
-
-            .presupuesto-container {
-                padding: 15px;
-            }
-            
+            body { padding: 10px; }
+            .presupuesto-container { padding: 15px; }
             header {
                 flex-direction: column;
                 align-items: center;
                 text-align: center;
             }
-
             .datos-empresa {
                 text-align: center;
                 margin-bottom: 20px;
             }
-
             .datos-presupuesto {
                 width: 100%;
                 text-align: center;
             }
-
-            .box-x {
-                display: none; /* Opcional: Ocultar en móviles si no es crucial */
-            }
-
-            .cliente-info {
-                grid-template-columns: 1fr; /* Una columna en pantallas pequeñas */
-            }
-            
+            .box-x { display: none; }
+            .cliente-info { grid-template-columns: 1fr; }
             table {
-                font-size: 0.7em; /* Reducir aún más la fuente de la tabla */
-                overflow-x: auto; /* Permite desplazamiento horizontal en la tabla */
+                font-size: 0.7em;
+                overflow-x: auto;
                 display: block;
                 white-space: nowrap;
             }
-
             td, th {
-                padding: 5px; /* Reducir el padding de las celdas */
+                padding: 5px;
                 font-size: 0.8em;
             }
-
-            .acciones {
+            .acciones, .row-actions {
                 display: flex;
                 flex-direction: column;
             }
-
             button {
                 width: 100%;
                 margin: 5px 0;
@@ -261,7 +254,7 @@
                     <label for="cliente-domicilio">Domicilio:</label>
                     <input type="text" id="cliente-domicilio" placeholder="Domicilio">
                 </div>
-                 <div>
+                <div>
                     <label for="cliente-iva">Condición IVA:</label>
                     <select id="cliente-iva" name="cliente-iva">
                         <option value="Responsable Inscripto">Responsable Inscripto</option>
@@ -279,7 +272,7 @@
                     <tr>
                         <th style="width: 15%;">Código</th>
                         <th style="width: 10%;">Cant.</th>
-                        <th style="width: 45%;">Descripción</th>
+                        <th style="width: 40%;">Descripción</th>
                         <th style="width: 15%;">Precio Unit.</th>
                         <th style="width: 15%;">Total</th>
                     </tr>
@@ -294,7 +287,10 @@
                     </tr>
                 </tbody>
             </table>
-            <button id="btn-add-row" class="no-print-pdf">Añadir Fila</button>
+            <div class="row-actions no-print-pdf">
+                <button id="btn-add-row">Añadir Fila</button>
+                <button id="btn-remove-row">Eliminar Fila</button>
+            </div>
         </section>
 
         <section id="totales" class="total-general">
@@ -324,6 +320,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         const tablaItems = document.getElementById('tabla-items');
         const btnAddRow = document.getElementById('btn-add-row');
+        const btnRemoveRow = document.getElementById('btn-remove-row');
         const btnPdf = document.getElementById('btn-pdf');
         const btnPrint = document.getElementById('btn-print');
 
@@ -334,7 +331,7 @@
                 clienteCuit: document.getElementById('cliente-cuit').value,
                 clienteDomicilio: document.getElementById('cliente-domicilio').value,
                 clienteIva: document.getElementById('cliente-iva').value,
-                condicionPago: document.getElementById('condicion-pago').value, // AÑADIDO
+                condicionPago: document.getElementById('condicion-pago').value,
                 observaciones: document.getElementById('observaciones').value,
                 items: []
             };
@@ -355,6 +352,7 @@
             const datos = JSON.parse(localStorage.getItem('presupuestoDatos'));
             if (!datos) {
                 document.getElementById('fecha').valueAsDate = new Date();
+                tablaItems.appendChild(crearFila());
                 return;
             }
 
@@ -363,7 +361,7 @@
             document.getElementById('cliente-cuit').value = datos.clienteCuit;
             document.getElementById('cliente-domicilio').value = datos.clienteDomicilio;
             document.getElementById('cliente-iva').value = datos.clienteIva;
-            document.getElementById('condicion-pago').value = datos.condicionPago || ''; // AÑADIDO
+            document.getElementById('condicion-pago').value = datos.condicionPago || '';
             document.getElementById('observaciones').value = datos.observaciones;
             
             tablaItems.innerHTML = '';
@@ -402,7 +400,7 @@
             row.innerHTML = `
                 <td><input type="text" class="codigo" placeholder="Código"></td>
                 <td><input type="number" class="cantidad" value="1" min="0"></td>
-                <td class="descripcion"><input type="text" class="descripcion" placeholder="Descripción del producto"></td>
+                <td class="descripcion"><input type="text" class="descripcion" placeholder="Descripción del producto o servicio"></td>
                 <td><input type="number" class="precio" value="0.00" step="0.01" min="0"></td>
                 <td class="total-fila">$0.00</td>
             `;
@@ -411,6 +409,17 @@
 
         btnAddRow.addEventListener('click', () => {
             tablaItems.appendChild(crearFila());
+            calcularTotales();
+        });
+
+        btnRemoveRow.addEventListener('click', () => {
+            const filas = tablaItems.querySelectorAll('.item-row');
+            if (filas.length > 1) {
+                filas[filas.length - 1].remove();
+                calcularTotales();
+            } else {
+                alert('No se puede eliminar la última fila.');
+            }
         });
 
         tablaItems.addEventListener('input', (e) => {
@@ -448,11 +457,11 @@
         cargarDatos();
         
         document.getElementById('presupuesto').addEventListener('input', e => {
-             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
-                 if (!e.target.closest('.item-row')) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                if (!e.target.closest('.item-row')) {
                     guardarDatos();
-                 }
-             }
+                }
+            }
         });
     });
 </script>
