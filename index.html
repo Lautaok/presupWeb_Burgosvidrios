@@ -284,14 +284,7 @@
                     </tr>
                 </thead>
                 <tbody id="tabla-items">
-                    <tr class="item-row">
-                        <td><input type="text" class="codigo" placeholder="Código"></td>
-                        <td><input type="number" class="cantidad" value="1" min="0"></td>
-                        <td class="descripcion"><input type="text" class="descripcion" placeholder="Descripción del producto o servicio"></td>
-                        <td><input type="number" class="precio" value="0.00" step="0.01" min="0"></td>
-                        <td class="total-fila">$0.00</td>
-                    </tr>
-                </tbody>
+                    </tbody>
             </table>
             <div class="row-actions no-print-pdf">
                 <button id="btn-add-row">Añadir Fila</button>
@@ -332,13 +325,7 @@
 
         const guardarDatos = () => {
             const datos = {
-                fecha: document.getElementById('fecha').value,
-                clienteNombre: document.getElementById('cliente-nombre').value,
-                clienteCuit: document.getElementById('cliente-cuit').value,
-                clienteDomicilio: document.getElementById('cliente-domicilio').value,
-                clienteIva: document.getElementById('cliente-iva').value,
-                condicionPago: document.getElementById('condicion-pago').value,
-                observaciones: document.getElementById('observaciones').value,
+                // Ya no guardamos datos de cliente para no recargarlos
                 items: []
             };
 
@@ -351,40 +338,29 @@
                 };
                 datos.items.push(item);
             });
+            // Guardamos un objeto casi vacío para mantener la estructura si se necesita en el futuro
             localStorage.setItem('presupuestoDatos', JSON.stringify(datos));
         };
 
         const cargarDatos = () => {
-            const datos = JSON.parse(localStorage.getItem('presupuestoDatos'));
-            if (!datos) {
-                document.getElementById('fecha').valueAsDate = new Date();
-                tablaItems.appendChild(crearFila());
-                return;
-            }
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Limpiamos los campos del cliente
+            document.getElementById('cliente-nombre').value = '';
+            document.getElementById('cliente-cuit').value = '';
+            document.getElementById('cliente-domicilio').value = '';
+            document.getElementById('condicion-pago').value = '';
+            document.getElementById('observaciones').value = '';
+            
+            // Ponemos la fecha de hoy
+            document.getElementById('fecha').valueAsDate = new Date();
 
-            document.getElementById('fecha').value = datos.fecha;
-            document.getElementById('cliente-nombre').value = datos.clienteNombre;
-            document.getElementById('cliente-cuit').value = datos.clienteCuit;
-            document.getElementById('cliente-domicilio').value = datos.clienteDomicilio;
-            document.getElementById('cliente-iva').value = datos.clienteIva;
-            document.getElementById('condicion-pago').value = datos.condicionPago || '';
-            document.getElementById('observaciones').value = datos.observaciones;
-            
+            // Limpiamos la tabla y añadimos una fila nueva
             tablaItems.innerHTML = '';
-            if (datos.items && datos.items.length > 0) {
-                datos.items.forEach((item) => {
-                    const newRow = crearFila();
-                    newRow.querySelector('.codigo').value = item.codigo;
-                    newRow.querySelector('.cantidad').value = item.cantidad;
-                    newRow.querySelector('.descripcion').value = item.descripcion;
-                    newRow.querySelector('.precio').value = item.precio;
-                    tablaItems.appendChild(newRow);
-                });
-            } else {
-                tablaItems.appendChild(crearFila());
-            }
-            
+            tablaItems.appendChild(crearFila());
+
+            // Recalculamos para que todo muestre $0.00
             calcularTotales();
+            // --- FIN DE LA MODIFICACIÓN ---
         };
 
         const calcularTotales = () => {
@@ -397,7 +373,7 @@
                 totalGeneral += totalFila;
             });
             document.getElementById('total-general').textContent = `$${totalGeneral.toFixed(2)}`;
-            guardarDatos();
+            // Ya no guardamos datos automáticamente al calcular para no sobreescribir
         };
 
         const crearFila = () => {
@@ -412,10 +388,10 @@
             `;
             return row;
         };
-
+        
+        // Resto del código JavaScript...
         btnAddRow.addEventListener('click', () => {
             tablaItems.appendChild(crearFila());
-            calcularTotales();
         });
 
         btnRemoveRow.addEventListener('click', () => {
@@ -428,13 +404,7 @@
             }
         });
 
-        tablaItems.addEventListener('input', (e) => {
-            if (e.target.classList.contains('cantidad') || e.target.classList.contains('precio')) {
-                calcularTotales();
-            } else {
-                guardarDatos();
-            }
-        });
+        tablaItems.addEventListener('input', calcularTotales);
         
         const generarNroComprobante = () => {
             let ultimoNro = localStorage.getItem('ultimoNroComprobante');
@@ -444,16 +414,27 @@
         };
         
         btnPdf.addEventListener('click', () => {
-            document.querySelectorAll('.no-print-pdf').forEach(el => el.style.display = 'none');
             const elementoPresupuesto = document.getElementById('presupuesto');
-            html2canvas(elementoPresupuesto, { scale: 2, useCORS: true }).then(canvas => {
+            document.querySelectorAll('.no-print-pdf').forEach(el => el.style.display = 'none');
+            elementoPresupuesto.style.width = '1000px';
+            elementoPresupuesto.style.maxWidth = '1000px';
+
+            html2canvas(elementoPresupuesto, {
+                scale: 2,
+                useCORS: true,
+                windowWidth: 1000
+            }).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
                 const pdf = new jsPDF('p', 'mm', 'a4');
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
                 pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
                 pdf.save(`presupuesto-${document.getElementById('nro-comprobante').textContent}.pdf`);
+
                 document.querySelectorAll('.no-print-pdf').forEach(el => el.style.display = '');
+                elementoPresupuesto.style.width = '';
+                elementoPresupuesto.style.maxWidth = '';
             });
         });
 
@@ -461,14 +442,6 @@
         
         generarNroComprobante();
         cargarDatos();
-        
-        document.getElementById('presupuesto').addEventListener('input', e => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
-                if (!e.target.closest('.item-row')) {
-                    guardarDatos();
-                }
-            }
-        });
     });
 </script>
 
