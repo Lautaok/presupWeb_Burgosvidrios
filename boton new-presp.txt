@@ -1,0 +1,4 @@
+<div class="acciones no-print-pdf">
+    <button id="btn-nuevo" style="background-color: #5cb85c; color: white;">Nuevo Presupuesto</button> <button id="btn-pdf">Guardar como PDF</button>
+    <button id="btn-print">Imprimir</button>
+</div>

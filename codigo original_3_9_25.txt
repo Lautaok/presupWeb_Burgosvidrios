@@ -243,7 +243,7 @@
             <p><strong>Inicio de Actividad:</strong> 15/09/2011</p>
         </div>
     </header>
-
+    
     <main>
         <section id="cliente">
             <h3>Cliente</h3>
@@ -356,13 +356,19 @@
 
         const cargarDatos = () => {
             const datos = JSON.parse(localStorage.getItem('presupuestoDatos'));
+            
+            // --- INICIO DE LA CORRECCIÓN ---
+            // Siempre establece la fecha actual al cargar la página.
+            document.getElementById('fecha').valueAsDate = new Date();
+            // --- FIN DE LA CORRECCIÓN ---
+
             if (!datos) {
-                document.getElementById('fecha').valueAsDate = new Date();
+                // Si no hay datos guardados, solo agrega una fila vacía y termina.
                 tablaItems.appendChild(crearFila());
                 return;
             }
 
-            document.getElementById('fecha').value = datos.fecha;
+            // Si hay datos, carga todo EXCEPTO la fecha.
             document.getElementById('cliente-nombre').value = datos.clienteNombre;
             document.getElementById('cliente-cuit').value = datos.clienteCuit;
             document.getElementById('cliente-domicilio').value = datos.clienteDomicilio;
@@ -444,16 +450,30 @@
         };
         
         btnPdf.addEventListener('click', () => {
-            document.querySelectorAll('.no-print-pdf').forEach(el => el.style.display = 'none');
             const elementoPresupuesto = document.getElementById('presupuesto');
-            html2canvas(elementoPresupuesto, { scale: 2, useCORS: true }).then(canvas => {
+
+            // Ocultar botones y aplicar estilo temporal para el PDF
+            document.querySelectorAll('.no-print-pdf').forEach(el => el.style.display = 'none');
+            elementoPresupuesto.style.width = '1000px';
+            elementoPresupuesto.style.maxWidth = '1000px';
+
+            html2canvas(elementoPresupuesto, {
+                scale: 2,
+                useCORS: true,
+                windowWidth: 1000
+            }).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
                 const pdf = new jsPDF('p', 'mm', 'a4');
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
                 pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
                 pdf.save(`presupuesto-${document.getElementById('nro-comprobante').textContent}.pdf`);
+
+                // Restaurar los estilos originales
                 document.querySelectorAll('.no-print-pdf').forEach(el => el.style.display = '');
+                elementoPresupuesto.style.width = '';
+                elementoPresupuesto.style.maxWidth = '';
             });
         });
 
