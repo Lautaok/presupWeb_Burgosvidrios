@@ -497,18 +497,16 @@
             `;
                 return row;
             };
-
+            
             // Función para generar y mostrar el número de comprobante
             const generarNroComprobante = () => {
-                let nroComprobante = document.getElementById('nro-comprobante').textContent;
-                // Si el campo de comprobante está vacío, genera uno nuevo
-                if (!nroComprobante || nroComprobante === '0001-00000000') {
-                    let ultimoNro = localStorage.getItem('ultimoNroComprobante');
-                    let nuevoNro = ultimoNro ? parseInt(ultimoNro) + 1 : 1;
-                    document.getElementById('nro-comprobante').textContent = `0001-${nuevoNro.toString().padStart(8, '0')}`;
-                }
+                let ultimoNro = localStorage.getItem('ultimoNroComprobante');
+                let nuevoNro = ultimoNro ? parseInt(ultimoNro) + 1 : 1;
+                document.getElementById('nro-comprobante').textContent = `0001-${nuevoNro.toString().padStart(8, '0')}`;
+                // Guardamos el nuevo número en el localStorage inmediatamente
+                localStorage.setItem('ultimoNroComprobante', nuevoNro);
             };
-            
+
             btnAddRow.addEventListener('click', () => {
                 tablaItems.appendChild(crearFila());
                 calcularTotales();
@@ -527,11 +525,6 @@
             tablaItems.addEventListener('input', calcularTotales);
 
             btnPdf.addEventListener('click', () => {
-                // Se guarda el nuevo número de comprobante solo al generar el PDF
-                const nroSpan = document.getElementById('nro-comprobante');
-                let ultimoNro = nroSpan.textContent.split('-')[1];
-                localStorage.setItem('ultimoNroComprobante', parseInt(ultimoNro));
-                
                 const elementoPresupuesto = document.getElementById('presupuesto');
                 document.querySelectorAll('.no-print-pdf').forEach(el => el.style.display = 'none');
                 elementoPresupuesto.style.width = '1000px';
@@ -548,27 +541,34 @@
                     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
                     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                    pdf.save(`presupuesto-${nroSpan.textContent}.pdf`);
+                    pdf.save(`presupuesto-${document.getElementById('nro-comprobante').textContent}.pdf`);
 
                     document.querySelectorAll('.no-print-pdf').forEach(el => el.style.display = '');
                     elementoPresupuesto.style.width = '';
                     elementoPresupuesto.style.maxWidth = '';
+                    
+                    // Al guardar el PDF, generamos el próximo número de comprobante
+                    generarNroComprobante();
+                    cargarDatos(); // Cargamos una nueva plantilla limpia
                 });
             });
 
             btnPrint.addEventListener('click', () => {
-                 // Se guarda el nuevo número de comprobante solo al imprimir
-                const nroSpan = document.getElementById('nro-comprobante');
-                let ultimoNro = nroSpan.textContent.split('-')[1];
-                localStorage.setItem('ultimoNroComprobante', parseInt(ultimoNro));
                 window.print();
+                // Al imprimir, generamos el próximo número de comprobante
+                generarNroComprobante();
+                cargarDatos(); // Cargamos una nueva plantilla limpia
             });
             
-            cargarDatos();
             // --- INICIO DE LA MODIFICACIÓN ---
-            // Se genera el número de comprobante al cargar la página
-            generarNroComprobante();
+            // Cargamos la plantilla inicial al recargar la página
+            cargarDatos();
+            // Y mostramos el último número de comprobante guardado o el número 1 si es la primera vez
+            const ultimoNroGuardado = localStorage.getItem('ultimoNroComprobante');
+            const nroMostrar = ultimoNroGuardado ? parseInt(ultimoNroGuardado) + 1 : 1;
+            document.getElementById('nro-comprobante').textContent = `0001-${nroMostrar.toString().padStart(8, '0')}`;
             // --- FIN DE LA MODIFICACIÓN ---
+
         });
     </script>
 </body>
