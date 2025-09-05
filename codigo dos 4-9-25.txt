@@ -135,7 +135,7 @@
             border: 1px solid #000;
             padding: 5px;
             text-align: center;
-            vertical-align: top;
+            font-size: 1.1rem;
         }
 
         th {
@@ -145,35 +145,26 @@
             font-size: 0.8em;
         }
 
-        /* Alineación específica para la columna de descripción */
-        td.descripcion {
-            text-align: left;
-        }
-
-        td .codigo,
-        td .cantidad {
+        td input {
             text-align: center;
-        }
-
-        td .descripcion-textarea {
-            width: 100%;
             border: none;
             background-color: transparent;
             font-size: 0.9em;
             padding: 0;
-            min-height: 20px;
-            resize: vertical;
-            overflow: hidden;
-            white-space: pre-wrap;
-            text-align: left;
+            width: 100%;
+            /* Ajuste de ancho para prevenir que el texto se corte */
         }
 
-        .descripcion-texto-pdf {
-            width: 100%;
-            padding: 0;
+        td .codigo {
+            text-align: center;
+        }
+
+        td .cantidad {
+            text-align: center;
+        }
+
+        td.descripcion input {
             text-align: left;
-            font-size: 0.9em;
-            word-wrap: break-word;
         }
 
         .total-general {
@@ -245,20 +236,18 @@
         footer textarea {
             min-height: 60px;
         }
-        
-        /* ESTILOS ESPECÍFICOS PARA LA IMPRESIÓN */
+
+        /* Estilos para impresión */
         @media print {
-            /* Reglas específicas para el diálogo de impresión */
             @page {
-                size: a4 portrait;
                 margin: 0;
+                size: auto;
             }
 
             body {
                 background-color: #fff;
                 padding: 0;
                 margin: 0;
-                font-size: 12px;
             }
 
             .acciones,
@@ -275,30 +264,6 @@
                 padding: 20px;
             }
 
-            /* Asegura que el contenido se ajuste al ancho de la página A4 */
-            header, main, footer {
-                width: 100%;
-                box-sizing: border-box;
-            }
-            
-            header {
-                flex-direction: row;
-                align-items: flex-start;
-                border-bottom: 2px solid #000;
-                padding-bottom: 10px;
-                margin-bottom: 20px;
-            }
-
-            .datos-empresa {
-                text-align: left;
-            }
-
-            .datos-presupuesto {
-                width: 350px;
-                text-align: center;
-            }
-
-            /* Eliminar los bordes y el fondo de los inputs para que no se vean como cuadros */
             input,
             textarea,
             select {
@@ -309,36 +274,15 @@
                 -webkit-appearance: none;
                 -moz-appearance: none;
                 appearance: none;
-                padding: 0;
             }
 
-            /* Oculta el icono del calendario en los inputs de fecha */
             input[type="date"]::-webkit-calendar-picker-indicator {
                 display: none;
-            }
-
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 20px;
-            }
-
-            th,
-            td {
-                border: 1px solid #000;
-                padding: 5px;
-                font-size: 0.8em;
-                vertical-align: top;
-            }
-
-            /* Asegura que las descripciones largas no se corten */
-            td.descripcion div {
-                white-space: pre-wrap;
-                word-wrap: break-word;
             }
         }
 
         /* Responsive Styles - Media Queries */
+        /* Para pantallas pequeñas, como celulares */
         @media (max-width: 600px) {
             body {
                 padding: 10px;
@@ -400,6 +344,7 @@
 </head>
 
 <body>
+
     <div id="presupuesto" class="presupuesto-container">
         <header>
             <div class="datos-empresa">
@@ -442,7 +387,7 @@
                             <option value="Responsable Inscripto">Responsable Inscripto</option>
                             <option value="Monotributista">Monotributista</option>
                             <option value="Exento">Exento</option>
-                            <option value="Consumidor Final" selected>Consumidor Final</option>
+                            <option value="Consumidor Final">Consumidor Final</option>
                         </select>
                     </div>
                 </div>
@@ -492,17 +437,29 @@
     <script>
         window.jsPDF = window.jspdf.jsPDF;
 
-        function ajustarAltura(textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = (textarea.scrollHeight) + 'px';
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
             const tablaItems = document.getElementById('tabla-items');
             const btnAddRow = document.getElementById('btn-add-row');
             const btnRemoveRow = document.getElementById('btn-remove-row');
             const btnPdf = document.getElementById('btn-pdf');
             const btnPrint = document.getElementById('btn-print');
+
+            const guardarDatos = () => {
+                const datos = {
+                    items: []
+                };
+
+                tablaItems.querySelectorAll('.item-row').forEach(row => {
+                    const item = {
+                        codigo: row.querySelector('.codigo').value,
+                        cantidad: row.querySelector('.cantidad').value,
+                        descripcion: row.querySelector('.descripcion').value,
+                        precio: row.querySelector('.precio').value,
+                    };
+                    datos.items.push(item);
+                });
+                localStorage.setItem('presupuestoDatos', JSON.stringify(datos));
+            };
 
             const cargarDatos = () => {
                 document.getElementById('cliente-nombre').value = '';
@@ -534,19 +491,19 @@
                 row.innerHTML = `
                 <td><input type="text" class="codigo" placeholder="Código"></td>
                 <td><input type="number" class="cantidad" value="1" min="0"></td>
-                <td class="descripcion">
-                    <textarea class="descripcion-textarea" placeholder="Descripción del producto o servicio" oninput="ajustarAltura(this)"></textarea>
-                </td>
+                <td class="descripcion"><input type="text" class="descripcion" placeholder="Descripción del producto o servicio"></td>
                 <td><input type="number" class="precio" value="0.00" step="0.01" min="0"></td>
                 <td class="total-fila">$0.00</td>
             `;
                 return row;
             };
-
+            
+            // Función para generar y mostrar el número de comprobante
             const generarNroComprobante = () => {
                 let ultimoNro = localStorage.getItem('ultimoNroComprobante');
                 let nuevoNro = ultimoNro ? parseInt(ultimoNro) + 1 : 1;
                 document.getElementById('nro-comprobante').textContent = `0001-${nuevoNro.toString().padStart(8, '0')}`;
+                // Guardamos el nuevo número en el localStorage inmediatamente
                 localStorage.setItem('ultimoNroComprobante', nuevoNro);
             };
 
@@ -568,57 +525,6 @@
             tablaItems.addEventListener('input', calcularTotales);
 
             btnPdf.addEventListener('click', () => {
-                const inputsToReplace = ['cliente-nombre', 'cliente-cuit', 'cliente-domicilio', 'condicion-pago'];
-                const inputsReplaced = [];
-
-                inputsToReplace.forEach(id => {
-                    const input = document.getElementById(id);
-                    if (input) {
-                        const div = document.createElement('div');
-                        div.style.padding = '5px';
-                        div.style.border = '1px solid #ccc';
-                        div.style.borderRadius = '4px';
-                        div.style.height = input.offsetHeight + 'px';
-                        div.textContent = input.value;
-                        input.parentNode.replaceChild(div, input);
-                        inputsReplaced.push({
-                            original: input,
-                            replacement: div
-                        });
-                    }
-                });
-
-                const textareas = document.querySelectorAll('textarea');
-                const textareaReplacements = [];
-                textareas.forEach(textarea => {
-                    const div = document.createElement('div');
-                    div.style.whiteSpace = 'pre-wrap';
-                    div.style.padding = '5px';
-                    div.style.minHeight = textarea.offsetHeight + 'px';
-                    div.textContent = textarea.value;
-                    textarea.parentNode.replaceChild(div, textarea);
-                    textareaReplacements.push({
-                        original: textarea,
-                        replacement: div
-                    });
-                });
-
-                const tableInputs = document.querySelectorAll('#tabla-items input');
-                const tableInputReplacements = [];
-
-                tableInputs.forEach(input => {
-                    const div = document.createElement('div');
-                    div.style.padding = '5px';
-                    div.style.whiteSpace = 'pre-wrap';
-                    div.style.wordBreak = 'break-all';
-                    div.textContent = input.value;
-                    input.parentNode.replaceChild(div, input);
-                    tableInputReplacements.push({
-                        original: input,
-                        replacement: div
-                    });
-                });
-
                 const elementoPresupuesto = document.getElementById('presupuesto');
                 document.querySelectorAll('.no-print-pdf').forEach(el => el.style.display = 'none');
                 elementoPresupuesto.style.width = '1000px';
@@ -633,88 +539,36 @@
                     const pdf = new jsPDF('p', 'mm', 'a4');
                     const pdfWidth = pdf.internal.pageSize.getWidth();
                     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
                     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
                     pdf.save(`presupuesto-${document.getElementById('nro-comprobante').textContent}.pdf`);
-
-                    inputsReplaced.forEach(item => {
-                        item.replacement.parentNode.replaceChild(item.original, item.replacement);
-                    });
-                    textareaReplacements.forEach(item => {
-                        item.replacement.parentNode.replaceChild(item.original, item.replacement);
-                    });
-                    tableInputReplacements.forEach(item => {
-                        item.replacement.parentNode.replaceChild(item.original, item.replacement);
-                    });
 
                     document.querySelectorAll('.no-print-pdf').forEach(el => el.style.display = '');
                     elementoPresupuesto.style.width = '';
                     elementoPresupuesto.style.maxWidth = '';
+                    
+                    // Al guardar el PDF, generamos el próximo número de comprobante
                     generarNroComprobante();
-                    cargarDatos();
+                    cargarDatos(); // Cargamos una nueva plantilla limpia
                 });
             });
 
             btnPrint.addEventListener('click', () => {
-                const inputsToReplace = ['cliente-nombre', 'cliente-cuit', 'cliente-domicilio', 'condicion-pago'];
-                const inputsReplaced = [];
-                inputsToReplace.forEach(id => {
-                    const input = document.getElementById(id);
-                    if (input) {
-                        const div = document.createElement('div');
-                        div.textContent = input.value;
-                        input.parentNode.replaceChild(div, input);
-                        inputsReplaced.push({
-                            original: input,
-                            replacement: div
-                        });
-                    }
-                });
-
-                const textareas = document.querySelectorAll('textarea');
-                const textareaReplacements = [];
-                textareas.forEach(textarea => {
-                    const div = document.createElement('div');
-                    div.style.whiteSpace = 'pre-wrap';
-                    div.textContent = textarea.value;
-                    textarea.parentNode.replaceChild(div, textarea);
-                    textareaReplacements.push({
-                        original: textarea,
-                        replacement: div
-                    });
-                });
-
-                const tableInputs = document.querySelectorAll('#tabla-items input');
-                const tableInputReplacements = [];
-                tableInputs.forEach(input => {
-                    const div = document.createElement('div');
-                    div.textContent = input.value;
-                    input.parentNode.replaceChild(div, input);
-                    tableInputReplacements.push({
-                        original: input,
-                        replacement: div
-                    });
-                });
-
                 window.print();
-
-                inputsReplaced.forEach(item => {
-                    item.replacement.parentNode.replaceChild(item.original, item.replacement);
-                });
-                textareaReplacements.forEach(item => {
-                    item.replacement.parentNode.replaceChild(item.original, item.replacement);
-                });
-                tableInputReplacements.forEach(item => {
-                    item.replacement.parentNode.replaceChild(item.original, item.replacement);
-                });
-
+                // Al imprimir, generamos el próximo número de comprobante
                 generarNroComprobante();
-                cargarDatos();
+                cargarDatos(); // Cargamos una nueva plantilla limpia
             });
-
+            
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Cargamos la plantilla inicial al recargar la página
             cargarDatos();
+            // Y mostramos el último número de comprobante guardado o el número 1 si es la primera vez
             const ultimoNroGuardado = localStorage.getItem('ultimoNroComprobante');
             const nroMostrar = ultimoNroGuardado ? parseInt(ultimoNroGuardado) + 1 : 1;
             document.getElementById('nro-comprobante').textContent = `0001-${nroMostrar.toString().padStart(8, '0')}`;
+            // --- FIN DE LA MODIFICACIÓN ---
+
         });
     </script>
 </body>

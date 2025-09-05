@@ -145,12 +145,10 @@
             font-size: 0.8em;
         }
 
-        /* Alineación específica para la columna de descripción */
-        td.descripcion {
-            text-align: left;
+        td .codigo {
+            text-align: center;
         }
 
-        td .codigo,
         td .cantidad {
             text-align: center;
         }
@@ -245,13 +243,11 @@
         footer textarea {
             min-height: 60px;
         }
-        
-        /* ESTILOS ESPECÍFICOS PARA LA IMPRESIÓN */
+
         @media print {
-            /* Reglas específicas para el diálogo de impresión */
             @page {
-                size: a4 portrait;
                 margin: 0;
+                size: auto;
             }
 
             body {
@@ -275,12 +271,6 @@
                 padding: 20px;
             }
 
-            /* Asegura que el contenido se ajuste al ancho de la página A4 */
-            header, main, footer {
-                width: 100%;
-                box-sizing: border-box;
-            }
-            
             header {
                 flex-direction: row;
                 align-items: flex-start;
@@ -298,7 +288,6 @@
                 text-align: center;
             }
 
-            /* Eliminar los bordes y el fondo de los inputs para que no se vean como cuadros */
             input,
             textarea,
             select {
@@ -312,7 +301,6 @@
                 padding: 0;
             }
 
-            /* Oculta el icono del calendario en los inputs de fecha */
             input[type="date"]::-webkit-calendar-picker-indicator {
                 display: none;
             }
@@ -327,18 +315,12 @@
             td {
                 border: 1px solid #000;
                 padding: 5px;
+                text-align: center;
                 font-size: 0.8em;
                 vertical-align: top;
             }
-
-            /* Asegura que las descripciones largas no se corten */
-            td.descripcion div {
-                white-space: pre-wrap;
-                word-wrap: break-word;
-            }
         }
 
-        /* Responsive Styles - Media Queries */
         @media (max-width: 600px) {
             body {
                 padding: 10px;
